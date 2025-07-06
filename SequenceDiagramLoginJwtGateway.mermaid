@@ -1,0 +1,20 @@
+%% JWT Authentication Sequence
+sequenceDiagram
+    participant Client
+    participant Gateway as API Gateway
+    participant Auth as Auth Service
+    participant Order as Order Service
+    participant Restaurant as Restaurant Service
+
+    Client->>+Auth: POST /auth/login {email, password}
+    Auth-->>-Client: JWT (with roles, userId)
+
+    Client->>+Gateway: POST /orders {JWT in Header}
+    Gateway->>+Auth: Validate JWT
+    Auth-->>-Gateway: Claims (userId, roles)
+
+    Gateway->>+Order: Forward Request (+X-User-Id, X-Roles)
+    Order->>+Restaurant: GET /menu/validate (Circuit Breaker)
+    Restaurant-->>-Order: Menu Data
+    Order-->>-Gateway: Order Created
+    Gateway-->>-Client: 201 Created

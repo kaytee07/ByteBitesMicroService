@@ -1,0 +1,38 @@
+%% Microservices Architecture
+graph TD
+%% ===== Clients =====
+    A[Web/Mobile Client] -->|1. Login| B(Auth Service)
+    A -->|2. API Requests| C[API Gateway]
+
+%% ===== Infrastructure =====
+    D[Discovery Server] -.->|Register| B
+    D -.->|Register| C
+    E[Config Server] -->|Central Config| B
+    E -->|Central Config| C
+
+%% ===== Business Services =====
+    C -->|3. JWT Validated| F[Order Service]
+    C -->|3. JWT Validated| G[Restaurant Service]
+
+%% ===== Event Flow =====
+    F -->|4. OrderPlacedEvent| H[(Kafka)]
+    H -->|5. Notify| I[Notification Service]
+    H -->|5. Update Status| G
+
+%% ===== Security =====
+    B -->|Issue/Validate| C
+    C -.->|JWT Claims| F
+    C -.->|JWT Claims| G
+
+%% ===== Resilience =====
+    F -->|Circuit Breaker| G
+    I -->|Fallback| J[(DLQ)]
+
+%% ===== Legend =====
+    style A fill:#ffcc99,stroke:#333
+    style B fill:#99ccff,stroke:#333
+    style C fill:#ccffcc,stroke:#333
+    style D,E fill:#ccccff,stroke:#333,stroke-dasharray: 5 5
+    style F,G,I fill:#ffccff,stroke:#333
+    style H fill:#ff9999,stroke:#333
+    linkStyle 0,1,2,3,4,5,6,7,8,9 stroke:#666,stroke-width:2px

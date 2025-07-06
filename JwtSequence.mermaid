@@ -1,0 +1,5 @@
+sequenceDiagram
+    Client->>Auth-Service: POST /auth/login
+    Auth-Service-->>Client: JWT
+    Client->>API-Gateway: Request with JWT
+    API-Gateway->>Microservice: Forward + Headers

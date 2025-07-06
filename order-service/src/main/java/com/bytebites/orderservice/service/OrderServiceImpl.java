@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -69,8 +70,16 @@ public class OrderServiceImpl {
     }
 
 
-    public OrderView fallBackOrder(UUID id, Throwable ex) {
-        log.warn("Fallback triggered for Order {} due to {}", id, ex.toString());
-        return new OrderView(id, id, null, null, null);
+
+    public List<OrderView> fallbackOrder(Throwable ex) {
+        log.warn("Fallback triggered for findAll: {}", ex.getMessage());
+        return Collections.emptyList();
     }
+
+
+    public List<OrderView> fallbackOrder(UUID userId, Throwable ex) {
+        log.warn("Fallback triggered for user {}: {}", userId, ex.getMessage());
+        return Collections.emptyList();
+    }
+
 }

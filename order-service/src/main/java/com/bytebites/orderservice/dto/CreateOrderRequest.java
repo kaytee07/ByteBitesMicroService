@@ -9,5 +9,5 @@ import java.util.UUID;
 public record CreateOrderRequest(
         UUID restaurantId,
         BigDecimal totalAmount,
-        OrderStatus orderStatus
+        OrderStatus status
 ) {}

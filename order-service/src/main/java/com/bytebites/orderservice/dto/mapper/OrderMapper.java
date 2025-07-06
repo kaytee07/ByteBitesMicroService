@@ -14,11 +14,12 @@ import java.util.UUID;
 public class OrderMapper {
 
     public Order toEntity(CreateOrderRequest request, UUID customerId) {
+        System.out.println(request);
         Order order = new Order();
         order.setCustomerId(customerId);
         order.setRestaurantId(request.restaurantId());
         order.setTotalAmount(request.totalAmount());
-        order.setStatus(OrderStatus.PENDING);
+        order.setStatus(request.status());
         order.setCreatedAt(LocalDateTime.now());
         return order;
     }

@@ -8,9 +8,11 @@ import com.bytebites.orderservice.model.Order;
 import com.bytebites.orderservice.dto.mapper.OrderMapper;
 import com.bytebites.orderservice.repository.OrderRepository;
 import com.bytebites.orderservice.util.CustomUserPrincipal;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderServiceImpl {
 
     private final OrderRepository orderRepository;
@@ -30,6 +33,8 @@ public class OrderServiceImpl {
     private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
 
 
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "fallbackOrder")
+    @Retry(name = "orderService")
     public List<OrderView> findAll() {
         return orderRepository.findAll()
                 .stream()
@@ -40,8 +45,8 @@ public class OrderServiceImpl {
     public OrderView createOrder(CreateOrderRequest request, UUID userId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         CustomUserPrincipal principal = (CustomUserPrincipal) auth.getPrincipal();
-
         Order order = orderMapper.toEntity(request, userId);
+
         Order saved = orderRepository.save(order);
         OrderPlacedEvent event = new OrderPlacedEvent();
         event.setOrderId(saved.getId());
@@ -54,10 +59,18 @@ public class OrderServiceImpl {
         return orderMapper.toView(saved);
     }
 
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "fallbackOrder")
+    @Retry(name = "orderService")
     public List<OrderView> findAllOrdersById(UUID userId) {
         return orderRepository.findByCustomerId(userId)
                 .stream()
                 .map(orderMapper::toView)
                 .collect(Collectors.toList());
+    }
+
+
+    public OrderView fallBackOrder(UUID id, Throwable ex) {
+        log.warn("Fallback triggered for Order {} due to {}", id, ex.toString());
+        return new OrderView(id, id, null, null, null);
     }
 }

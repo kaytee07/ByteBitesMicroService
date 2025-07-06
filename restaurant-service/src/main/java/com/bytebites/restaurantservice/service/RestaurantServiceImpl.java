@@ -8,27 +8,36 @@ import com.bytebites.restaurantservice.dto.mapper.RestaurantMapper;
 import com.bytebites.restaurantservice.model.Restaurant;
 import com.bytebites.restaurantservice.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+
 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RestaurantServiceImpl implements RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
 
+    @CircuitBreaker(name = "restaurantService", fallbackMethod = "fallbackRestaurant")
+    @Retry(name = "restaurantService")
     public  List<RestaurantDto> findAll(){
         return restaurantRepository.findAll().stream()
                 .map(RestaurantMapper::toDto)
                 .collect(Collectors.toList());
     }
 
+    @CircuitBreaker(name = "restaurantService", fallbackMethod = "fallbackRestaurant")
+    @Retry(name = "restaurantService")
     @Override
     @Transactional(readOnly = true)
     public RestaurantDto getRestaurantById(UUID id) {
@@ -37,6 +46,8 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
     }
 
+    @CircuitBreaker(name = "restaurantService", fallbackMethod = "fallbackRestaurant")
+    @Retry(name = "restaurantService")
     @Override
     @Transactional(readOnly = true)
     public List<RestaurantDto> getRestaurantsByOwner(UUID ownerId) {
@@ -81,5 +92,10 @@ public class RestaurantServiceImpl implements RestaurantService {
         }
 
         restaurantRepository.delete(restaurant);
+    }
+
+    public RestaurantDto fallBackRestaurant(UUID id, Throwable ex) {
+        log.warn("Fallback triggered for restaurant {} due to {}", id, ex.toString());
+        return new RestaurantDto(id, null, null, null, null);
     }
 }

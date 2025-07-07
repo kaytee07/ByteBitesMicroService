@@ -22,6 +22,7 @@ public class SecurityConfig {
 
 
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(headerAuthFilter, UsernamePasswordAuthenticationFilter.class)

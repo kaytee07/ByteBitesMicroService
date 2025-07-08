@@ -13,12 +13,12 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL) // Only include non-null fields in JSON output
+@JsonInclude(JsonInclude.Include.NON_NULL) 
 public class ErrorResponse {
     private LocalDateTime timestamp;
     private Integer status;
     private String error;
     private String message;
     private String path;
-    private Map<String, String> details; // For validation errors, to hold field-specific messages
+    private Map<String, String> details;
 }

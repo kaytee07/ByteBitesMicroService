@@ -37,6 +37,7 @@ public class OrderServiceImpl {
     @CircuitBreaker(name = "OrderService", fallbackMethod = "fallbackOrder")
     @Retry(name = "orderService")
     public List<OrderView> findAll() {
+        log.info("Fetching all orders");
         return orderRepository.findAll()
                 .stream()
                 .map(orderMapper::toView)
@@ -44,6 +45,7 @@ public class OrderServiceImpl {
     }
 
     public OrderView createOrder(CreateOrderRequest request, UUID userId) {
+        log.info("Received order request from userId={} for restaurantId={}", userId, request.restaurantId());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         CustomUserPrincipal principal = (CustomUserPrincipal) auth.getPrincipal();
         Order order = orderMapper.toEntity(request, userId);
@@ -57,12 +59,14 @@ public class OrderServiceImpl {
         event.setStatus(saved.getStatus());
         event.setEmail(principal.getEmail());
         kafkaTemplate.send("orders.placed", event);
+        log.info("Order placed successfully. OrderId={}", saved.getId());
         return orderMapper.toView(saved);
     }
 
     @CircuitBreaker(name = "OrderService", fallbackMethod = "fallbackOrder")
     @Retry(name = "orderService")
     public List<OrderView> findAllOrdersById(UUID userId) {
+        log.info("Fetching all orders for userId={}", userId);
         return orderRepository.findByCustomerId(userId)
                 .stream()
                 .map(orderMapper::toView)

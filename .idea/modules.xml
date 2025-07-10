@@ -3,6 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/BytebitesMicroService.iml" filepath="$PROJECT_DIR$/.idea/BytebitesMicroService.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/api-gateway.main.iml" filepath="$PROJECT_DIR$/.idea/modules/api-gateway.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/api-gateway.test.iml" filepath="$PROJECT_DIR$/.idea/modules/api-gateway.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.bytebites.api-gateway.iml" filepath="$PROJECT_DIR$/.idea/modules/com.bytebites.api-gateway.iml" />
     </modules>
   </component>
 </project>

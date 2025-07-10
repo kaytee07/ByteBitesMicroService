@@ -34,7 +34,7 @@ public class OrderServiceImpl {
     private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
 
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "fallbackOrder")
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "fallbackFindAll")
     @Retry(name = "orderService")
     public List<OrderView> findAll() {
         log.info("Fetching all orders");
@@ -63,7 +63,7 @@ public class OrderServiceImpl {
         return orderMapper.toView(saved);
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "fallbackOrder")
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "fallFindByUser")
     @Retry(name = "orderService")
     public List<OrderView> findAllOrdersById(UUID userId) {
         log.info("Fetching all orders for userId={}", userId);
@@ -75,14 +75,13 @@ public class OrderServiceImpl {
 
 
 
-    public List<OrderView> fallbackOrder(Throwable ex) {
-        log.warn("Fallback triggered for findAll: {}", ex.getMessage());
+    public List<OrderView> fallbackFindAll(Throwable ex) {
+        log.warn("Fallback for findAll: {}", ex.getMessage());
         return Collections.emptyList();
     }
 
-
-    public List<OrderView> fallbackOrder(UUID userId, Throwable ex) {
-        log.warn("Fallback triggered for user {}: {}", userId, ex.getMessage());
+    public List<OrderView> fallbackFindByUser(UUID userId, Throwable ex) {
+        log.warn("Fallback for user {}: {}", userId, ex.getMessage());
         return Collections.emptyList();
     }
 

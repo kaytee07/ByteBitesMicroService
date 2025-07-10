@@ -4,6 +4,8 @@ import com.bytebites.orderservice.dto.CreateOrderRequest;
 import com.bytebites.orderservice.enums.OrderStatus;
 import com.bytebites.orderservice.event.OrderPlacedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import org.junit.jupiter.api.Test;
@@ -29,8 +31,8 @@ import java.util.UUID;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
+@SpringBootTest
 @AutoConfigureMockMvc
 public class OrderIntegrationTest {
 
@@ -57,11 +59,14 @@ public class OrderIntegrationTest {
     @MockitoBean
     private KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
 
-    private UUID customerId = UUID.randomUUID();
-    private UUID restaurantId = UUID.randomUUID();
+    private final UUID customerId = UUID.randomUUID();
+    private final UUID restaurantOwnerId = UUID.randomUUID();
+    private final UUID restaurantId = UUID.randomUUID();
+
+    private final String customerEmail = "test@customer.com";
+    private final String ownerEmail = "admin@restaurant.com";
 
     @Test
-    @WithMockUser(username = "test@customer.com", roles = {"CUSTOMER"})
     void testCreateOrder() throws Exception {
         CreateOrderRequest request = new CreateOrderRequest(
                 restaurantId,
@@ -70,27 +75,33 @@ public class OrderIntegrationTest {
         );
 
         mockMvc.perform(post("/api/orders")
-                        .header("X-User-ID", customerId)
+                        .header("X-User-ID", customerId.toString())
+                        .header("X-User-Email", customerEmail)
+                        .header("X-User-Roles", "CUSTOMER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.restaurantId").value(restaurantId.toString()))
-                .andExpect(jsonPath("$.totalAmount").value("25.50"))
+                .andExpect(jsonPath("$.totalAmount", comparesEqualTo(25.50))) // <-- Fix here
                 .andExpect(jsonPath("$.status").value("PENDING"));
     }
 
     @Test
-    @WithMockUser(username = "admin@restaurant.com", roles = {"RESTAURANT_OWNER"})
     void testGetAllOrdersAsOwner() throws Exception {
-        mockMvc.perform(get("/api/orders"))
+        mockMvc.perform(get("/api/orders")
+                        .header("X-User-ID", restaurantOwnerId.toString())
+                        .header("X-User-Email", ownerEmail)
+                        .header("X-User-Roles", "RESTAURANT_OWNER"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "test@customer.com", roles = {"CUSTOMER"})
     void testGetMyOrders() throws Exception {
         mockMvc.perform(get("/api/orders/myorder")
-                        .header("X-User-ID", customerId))
+                        .header("X-User-ID", customerId.toString())
+                        .header("X-User-Email", customerEmail)
+                        .header("X-User-Roles", "CUSTOMER"))
                 .andExpect(status().isOk());
     }
 }
+

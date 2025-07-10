@@ -128,13 +128,13 @@ class OrderServiceImplTest {
 
     @Test
     void fallbackOrder_shouldReturnEmptyList_whenNoUserId() {
-        List<OrderView> fallback = orderService.fallbackOrder(new RuntimeException("Service failure"));
+        List<OrderView> fallback = orderService.fallbackFindAll(new RuntimeException("Service failure"));
         assertTrue(fallback.isEmpty());
     }
 
     @Test
     void fallbackOrder_shouldReturnEmptyList_whenUserIdProvided() {
-        List<OrderView> fallback = orderService.fallbackOrder(userId, new RuntimeException("Timeout"));
+        List<OrderView> fallback = orderService.fallbackFindByUser(userId, new RuntimeException("Timeout"));
         assertTrue(fallback.isEmpty());
     }
 }
